@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer with Resizable Grid</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #imgInput {
+            margin: 20px;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        .popup-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        #closePopup {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        #closePopup:hover,
+        #closePopup:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #resizerContainer {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            margin: 0 auto;
+        }
+
+        #imgPreview {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        #gridOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 300px;
+            border: 2px dashed #333;
+            background-color: rgba(255, 255, 255, 0.5);
+            cursor: move;
+            box-sizing: border-box;
+        }
+
+        .resize-handle {
+            width: 10px;
+            height: 10px;
+            background: #333;
+            position: absolute;
+            right: -5px;
+            bottom: -5px;
+            cursor: nwse-resize;
+        }
+
+        .dimensions {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+
+        #applyResize {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 20px;
+        }
+
+        #croppedImage {
+            display: block;
+            max-width: 100%;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="imgInput">
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <span id="closePopup">&times;</span>
+            <div id="resizerContainer">
+                <img id="imgPreview" src="" alt="Image Preview">
+                <div id="gridOverlay">
+                    <div class="resize-handle" id="resize-handle-br"></div>
+                </div>
+            </div>
+            <div class="dimensions">
+                <span>Width: <span id="widthValue">300px</span></span>
+                <span>Height: <span id="heightValue">300px</span></span>
+            </div>
+            <button id="applyResize">Apply</button>
+        </div>
+    </div>
+    <img id="croppedImage" src="" alt="Cropped Image">
+    <script>
+        document.getElementById('imgInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('imgPreview');
+                    img.src = e.target.result;
+
+                    // Show popup
+                    document.getElementById('popup').style.display = 'block';
+
+                    // Initialize grid
+                    const gridOverlay = document.getElementById('gridOverlay');
+                    gridOverlay.style.top = '0px';
+                    gridOverlay.style.left = '0px';
+                    gridOverlay.style.width = '300px';
+                    gridOverlay.style.height = '300px';
+                    updateDimensions();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        const gridOverlay = document.getElementById('gridOverlay');
+        const resizeHandle = document.getElementById('resize-handle-br');
+        let isDragging = false;
+        let isResizing = false;
+        let startX, startY, initialTop, initialLeft, initialWidth, initialHeight;
+
+        // Dragging functionality
+        gridOverlay.addEventListener('mousedown', function (event) {
+            if (event.target === resizeHandle) {
+                isResizing = true;
+            } else {
+                isDragging = true;
+                startX = event.clientX;
+                startY = event.clientY;
+                initialTop = parseInt(gridOverlay.style.top);
+                initialLeft = parseInt(gridOverlay.style.left);
+            }
+        });
+
+        document.addEventListener('mousemove', function (event) {
+            if (isDragging) {
+                const dx = event.clientX - startX;
+                const dy = event.clientY - startY;
+                gridOverlay.style.top = (initialTop + dy) + 'px';
+                gridOverlay.style.left = (initialLeft + dx) + 'px';
+            } else if (isResizing) {
+                const dx = event.clientX - startX;
+                const dy = event.clientY - startY;
+                gridOverlay.style.width = (initialWidth + dx) + 'px';
+                gridOverlay.style.height = (initialHeight + dy) + 'px';
+                updateDimensions();
+            }
+        });
+
+        document.addEventListener('mouseup', function () {
+            isDragging = false;
+            isResizing = false;
+        });
+
+        resizeHandle.addEventListener('mousedown', function (event) {
+            isResizing = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            initialWidth = gridOverlay.clientWidth;
+            initialHeight = gridOverlay.clientHeight;
+            event.stopPropagation();
+        });
+
+        document.getElementById('applyResize').addEventListener('click', function () {
+            const img = document.getElementById('imgPreview');
+            const gridRect = gridOverlay.getBoundingClientRect();
+            const imgRect = img.getBoundingClientRect();
+
+            const canvas = document.createElement('canvas');
+            const scaleX = img.naturalWidth / imgRect.width;
+            const scaleY = img.naturalHeight / imgRect.height;
+            const startX = (gridRect.left - imgRect.left) * scaleX;
+            const startY = (gridRect.top - imgRect.top) * scaleY;
+            const width = gridRect.width * scaleX;
+            const height = gridRect.height * scaleY;
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, startX, startY, width, height, 0, 0, width, height);
+
+            const croppedImg = document.getElementById('croppedImage');
+            croppedImg.src = canvas.toDataURL();
+
+            document.getElementById('popup').style.display = 'none';
+        });
+
+        document.getElementById('closePopup').addEventListener('click', function () {
+            document.getElementById('popup').style.display = 'none';
+        });
+
+        window.onclick = function (event) {
+            if (event.target == document.getElementById('popup')) {
+                document.getElementById('popup').style.display = 'none';
+            }
+        };
+
+        function updateDimensions() {
+            const gridOverlay = document.getElementById('gridOverlay');
+            document.getElementById('widthValue').textContent = gridOverlay.clientWidth + 'px';
+            document.getElementById('heightValue').textContent = gridOverlay.clientHeight + 'px';
+        }
+    </script>
+</body>
+</html>

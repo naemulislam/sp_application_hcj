@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>After Effects JSON Animation</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #animationContainer {
+            position: relative;
+            max-width: 600px;
+            margin: 50px auto;
+        }
+
+        #controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        #playPauseBtn {
+            cursor: pointer;
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        #progressBarContainer {
+            flex-grow: 1;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            height: 10px;
+            margin-left: 10px;
+        }
+
+        #progressBar {
+            height: 100%;
+            width: 0;
+            background-color: #007bff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center">Upload JSON Animation</h1>
+        <div class="form-group text-center">
+            <input type="file" id="jsonInput" class="form-control-file">
+        </div>
+        <div id="animationContainer"></div>
+        <div id="controls" class="d-none">
+            <div id="playPauseBtn">&#9654;</div> <!-- Play icon -->
+            <div id="progressBarContainer">
+                <div id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.9/lottie.min.js"></script>
+    <script>
+        let animation = null;
+        let isPlaying = false;
+
+        document.getElementById('jsonInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file && file.type === "application/json") {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const animationData = JSON.parse(e.target.result);
+
+                    // Destroy previous animation if exists
+                    if (animation) {
+                        animation.destroy();
+                    }
+
+                    animation = lottie.loadAnimation({
+                        container: document.getElementById('animationContainer'),
+                        renderer: 'svg',
+                        loop: true,
+                        autoplay: true,
+                        animationData: animationData
+                    });
+
+                    // Show controls
+                    document.getElementById('controls').classList.remove('d-none');
+
+                    animation.addEventListener('enterFrame', updateProgressBar);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        document.getElementById('playPauseBtn').addEventListener('click', function () {
+            if (isPlaying) {
+                animation.pause();
+                this.innerHTML = "&#9654;"; // Play icon
+            } else {
+                animation.play();
+                this.innerHTML = "&#10074;&#10074;"; // Pause icon
+            }
+            isPlaying = !isPlaying;
+        });
+
+        function updateProgressBar() {
+            const progress = (animation.currentFrame / animation.totalFrames) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+
+            if (progress >= 100) {
+                document.getElementById('playPauseBtn').innerHTML = "&#9654;"; // Reset to Play icon
+                isPlaying = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
