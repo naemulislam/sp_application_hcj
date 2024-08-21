@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Video Embed</title>
+</head>
+<body>
+    <h1>Video Player</h1>
+    <!-- Input field for the video URL -->
+    <input type="text" id="videoUrl" placeholder="Enter Facebook or YouTube URL" style="width: 100%; padding: 8px;">
+    <button onclick="loadVideo()">Play Video</button>
+    
+    <!-- The iframe where the video will be displayed -->
+    <div style="margin-top: 20px;">
+        <iframe id="videoFrame" width="500" height="580" style="border:none;overflow:hidden" scrolling="no"
+        frameborder="0" allowfullscreen="true"
+        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+    </div>
+
+    <script>
+        function loadVideo() {
+            const url = document.getElementById('videoUrl').value;
+            const iframe = document.getElementById('videoFrame');
+            let embedUrl = '';
+
+            if (url.includes('facebook.com')) {
+                // Handle both Facebook video and reel URLs
+                let videoId;
+                
+                if (url.includes('/reel/')) {
+                    // Extract the reel ID from the URL
+                    videoId = url.split('/reel/')[1].split('?')[0];
+                } else if (url.includes('v=')) {
+                    // Extract the video ID from a standard Facebook video URL
+                    videoId = url.match(/v=([0-9]+)/)[1];
+                }
+
+                if (videoId) {
+                    embedUrl = `https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/watch/?v=${videoId}`;
+                } else {
+                    alert('Could not extract video ID from the provided Facebook URL.');
+                    return;
+                }
+            } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                // Handle YouTube video and short URLs
+                let videoId;
+
+                if (url.includes('youtube.com/watch')) {
+                    // Standard YouTube video URL
+                    videoId = url.split('v=')[1]?.split('&')[0];
+                } else if (url.includes('youtu.be')) {
+                    // Shortened YouTube URL
+                    videoId = url.split('/').pop();
+                } else if (url.includes('youtube.com/shorts/')) {
+                    // YouTube Shorts URL
+                    videoId = url.split('/shorts/')[1]?.split('?')[0];
+                }else if(url.includes('youtube.com/embed/')){
+                    
+                    videoId = url.split('/embed/')[1]?.split('?')[0];
+                }
+                console.log(videoId);
+                
+                if (videoId) {
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                } else {
+                    alert('Could not extract video ID from the provided YouTube URL.');
+                    return;
+                }
+            } else {
+                alert('Please enter a valid Facebook or YouTube URL.');
+                return;
+            }
+
+            iframe.src = embedUrl;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multiple Image Uploader</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        padding-top: 50px;
+      }
+
+      .uploader {
+        margin-bottom: 20px;
+      }
+
+      .uploader label {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .uploader input[type="file"] {
+        display: none;
+      }
+
+      .previewContainer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        max-width: 100%;
+      }
+
+      .preview-image {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 5px;
+        border: 2px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="uploader">
+      <label for="imageInput">Upload Multiple Images</label>
+      <input
+        type="file"
+        id="imageInput"
+        multiple
+        accept="image/*"
+        onchange="loadFile(event)"
+      />
+    </div>
+    <div class="previewContainer"></div>
+
+    <script>
+      var loadFile = function (event) {
+        for (let i = 0; i < event.target.files.length; i++) {
+          var image = document.createElement("img");
+          image.src = URL.createObjectURL(event.target.files[i]);
+          image.id = "output";
+          image.width = "200";
+          image.height = "200";
+          document.querySelector(".previewContainer").appendChild(image);
+        }
+      };
+    </script>
+  </body>
+</html>
